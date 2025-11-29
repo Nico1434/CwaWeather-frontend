@@ -3,50 +3,127 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>台灣天氣與旅遊地圖 (三欄佈局)</title>
+    <title>🏡 動物森友會風格的台灣天氣與旅遊地圖 (精簡天氣版)</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
+        /* ================================================= */
+        /* --- 1. 任天堂動物森友會風格樣式 (ACNH Style) --- */
+        /* ================================================= */
+
+        :root {
+            /* 主要主題色 */
+            --ac-blue: #a0d8f0; /* 天空藍 */
+            --ac-green: #c0f0a0; /* 草地綠 */
+            --ac-text: #4a4a4a; /* 深灰文字 */
+            --ac-accent: #ff80a0; /* 粉紅色亮點 (選取色) */
+            --ac-shadow: rgba(0, 0, 0, 0.15); /* 較明顯的陰影 */
+            --ac-border-color: #6a5a4a; /* 深棕色邊框 */
+            --ac-panel-bg: #fffaf0; /* 介面底色 (奶白) */
+        }
+
         body {
+            font-family: 'Fredoka', 'Noto Sans TC', cursive, sans-serif;
+            background-color: var(--ac-blue); 
+            background-image: linear-gradient(to top, var(--ac-green) 50%, var(--ac-blue) 100%);
+            min-height: 100vh;
             margin: 0;
             padding: 0;
-            font-family: Arial, "Noto Sans TC", sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #f8f8f8;
-            min-height: 100vh;
+            color: var(--ac-text);
+            padding-bottom: 50px; 
         }
 
         h1 {
-            margin-top: 20px;
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
+            color: #d9534f;
+            background-color: #fff;
+            padding: 10px 30px;
+            border-radius: 20px;
+            border: 3px solid var(--ac-accent); 
+            box-shadow: 0 4px 6px var(--ac-shadow);
+            margin-top: 30px;
+            margin-bottom: 20px; /* 調整下方間距 */
+            font-size: 28px;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 0 #fff; 
         }
 
-        /* --- Layout: 三欄佈局設定 --- */
+        /* --- 新增：引導圖片樣式 --- */
+        .intro-image {
+            max-width: 800px; /* 限制最大寬度 */
+            width: 90%; /* RWD: 在小螢幕上佔 90% 寬度 */
+            height: auto; /* 保持比例 */
+            margin-bottom: 30px; /* 與下方內容保持間距 */
+            border-radius: 15px; /* 圓角 */
+            box-shadow: 0 4px 8px var(--ac-shadow); /* 陰影效果 */
+        }
+
+        /* --- 標題與內嵌說明圖 (放在標題旁) --- */
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0 10px;
+            margin-bottom: 12px;
+        }
+
+        .intro-inline {
+            width: 64px; /* 縮小尺寸 */
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 3px 6px var(--ac-shadow);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        .intro-inline:hover {
+            transform: scale(1.05);
+            opacity: 0.95;
+        }
+
+        @media (max-width: 600px) {
+            .header-row { flex-direction: column; gap: 8px; }
+            .intro-inline { width: 80%; max-width: 300px; }
+        }
+
+        /* --- Layout: 保持三欄佈局設定 --- */
         .container {
             display: flex; 
             flex-wrap: wrap; 
             justify-content: center;
-            gap: 15px; 
+            gap: 25px; 
             width: 100%;
             padding: 20px;
             box-sizing: border-box;
             max-width: 1500px; 
         }
 
-        /* --- Map (居中，佔據主要寬度) --- */
         #mapBox {
             flex-basis: 50%; 
             max-width: 700px;
             min-width: 300px;
             flex-grow: 1;
+            /* AC 風格邊框 */
+            border: 5px solid var(--ac-border-color);
+            border-radius: 15px;
+            background-color: var(--ac-green);
+            box-shadow: 5px 5px 0 0 var(--ac-shadow);
+            padding: 10px;
         }
 
         #taiwanMap {
             width: 100%;
             height: auto;
+            border-radius: 5px; 
         }
 
         /* --- Panel 容器通用樣式 (天氣和觀光) --- */
@@ -54,93 +131,98 @@
             flex-basis: 23%; 
             min-width: 300px; 
             flex-grow: 1;
-            
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: #fff;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            /* AC 風格覆蓋 */
+            border: 3px solid var(--ac-border-color); 
+            border-radius: 20px; 
+            background: var(--ac-panel-bg); 
+            box-shadow: 5px 5px 0 0 var(--ac-shadow); 
             overflow: hidden;
             display: flex;
             flex-direction: column; 
+            transition: transform 0.3s, box-shadow 0.3s;
         }
         
+        #weatherPanel:hover, #tourismPanel:hover {
+             transform: translateY(-5px);
+             box-shadow: 8px 8px 0 0 var(--ac-shadow);
+        }
+
         /* --- 標題通用樣式 --- */
         .section-title {
-            padding: 15px 20px;
+            padding: 18px 25px;
             margin: 0;
-            font-size: 20px;
-            font-weight: bold;
-            border-bottom: 1px solid #e0e0e0;
+            font-size: 22px;
+            font-weight: 700;
+            border-bottom: 3px solid var(--ac-border-color); 
+            border-radius: 17px 17px 0 0; 
         }
 
         /* --- 天氣標題 (左側) --- */
         #cityTitle {
-            color: #007bff;
-            background-color: #f0f8ff; 
+            color: var(--ac-text);
+            background-color: var(--ac-blue); 
+            text-shadow: 1px 1px 0 #fff;
         }
 
         /* --- 觀光標題 (右側) --- */
         #tourismPanel .section-title {
-            color: #007bff;
-            background-color: #e9f7ff; 
+            color: var(--ac-text);
+            background-color: var(--ac-accent); 
+            text-shadow: 1px 1px 0 #fff;
         }
 
         /* --- 內容區域內邊距 --- */
         .panel-content {
-            padding: 15px 20px;
+            padding: 20px 25px;
             flex-grow: 1; 
         }
         
-        /* --- Hover & Selection (保持不變) --- */
+        /* --- Hover & Selection --- */
         .city-area:hover {
-            fill: #007bff !important;
-            cursor: pointer;
-            opacity: 0.8;
+            fill: var(--ac-accent) !important; 
+            cursor: url('AC_Shovel_Cursor.png'), pointer; 
+            opacity: 0.9;
             transition: fill 0.3s; 
         }
+        .city-area[fill="#e83e8c"] { 
+             fill: var(--ac-accent) !important;
+        }
 
-        /* --- 卡片樣式 (天氣 & 景點) (保持不變) --- */
+        /* --- 卡片樣式 (天氣 & 景點) (AC 風格調整) --- */
         #weatherResult, #touristSpotsList {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-height: 80px; 
-            padding: 0; 
+            gap: 15px; 
         }
         
         .forecast-card, .spot-card {
-            padding: 12px;
-            border: 1px solid #dcdcdc;
-            border-radius: 6px;
+            padding: 15px;
+            border: 2px dashed var(--ac-accent); 
+            border-radius: 12px;
             background-color: #ffffff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px var(--ac-shadow);
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .forecast-card:hover, .spot-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 8px var(--ac-shadow);
         }
 
-        .spot-card h4 { color: #0056b3; } 
-        .forecast-card p, .spot-card p { font-size: 14px; color: #666; }
+        .spot-card h4 { color: #8b4513; } 
+        .forecast-card p, .spot-card p { font-size: 15px; color: var(--ac-text); }
         .temp-range { color: #d9534f; font-weight: bold; }
         
-        /* ================================================= */
         /* --- 穿搭建議區塊樣式 --- */
-        /* ================================================= */
         .clothing-advice {
             margin-top: 10px;
             padding-top: 5px; 
-            border-top: 1px dashed #eee; 
-            color: #1e7e34; 
+            border-top: 1px solid #eee; 
+            color: var(--ac-text); 
             font-weight: bold;
             display: flex; 
             align-items: center; 
             gap: 8px; 
         }
         
-        /* 穿搭圖示樣式 */
         .clothing-icon {
             width: 30px;
             height: 30px;
@@ -149,11 +231,10 @@
             flex-shrink: 0; 
         }
 
-        /* ⭐ 新增：用於包裹 30x30 圖示的容器，使其可點擊 */
         .icon-wrapper {
             cursor: pointer;
             display: inline-block;
-            line-height: 0; /* 消除 baseline 影響 */
+            line-height: 0; 
             transition: opacity 0.2s;
         }
 
@@ -161,9 +242,7 @@
             opacity: 0.8;
         }
         
-        /* ================================================= */
-        /* --- 圖片放大 Modal 樣式 (重新引入) --- */
-        /* ================================================= */
+        /* --- 圖片放大 Modal 樣式 (保持不變) --- */
         #imageModal {
             display: none; 
             position: fixed;
@@ -177,7 +256,6 @@
             align-items: center;
             justify-content: center;
         }
-
         #modalContent {
             margin: auto;
             display: block;
@@ -186,7 +264,6 @@
             max-height: 90vh;
             object-fit: contain; 
         }
-
         .close-btn {
             position: absolute;
             top: 15px;
@@ -197,6 +274,40 @@
             transition: 0.3s;
             cursor: pointer;
         }
+
+        /* --- 驚喜氣泡 (Surprise Bubble) --- */
+        #surpriseBubble {
+            position: absolute;
+            display: none; 
+            padding: 15px 20px;
+            background-color: #fffaf0; 
+            border: 3px solid var(--ac-border-color);
+            border-radius: 20px;
+            box-shadow: 5px 5px 0 0 var(--ac-shadow);
+            z-index: 999;
+            max-width: 250px;
+            text-align: center;
+            clip-path: polygon(
+                0% 0%, 100% 0%, 100% 80%, 75% 80%, 65% 100%, 55% 80%, 0% 80%
+            );
+            animation: bounceIn 0.3s ease-out; 
+            cursor: pointer;
+            user-select: none; 
+        }
+
+        #surpriseBubble p {
+            margin: 0;
+            font-weight: 700;
+            color: var(--ac-text);
+            font-size: 16px;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
 
         /* ------------------------------------------- */
         /* --- RWD Media Query (切換到堆疊佈局) --- */
@@ -209,26 +320,39 @@
             }
 
             #mapBox, #weatherPanel, #tourismPanel {
-                max-width:500px; 
-                width: 100%;
+                max-width:600px; 
+                width: 90%;
                 flex-basis: auto; 
+            }
+            
+            .panel-content {
+                /* 手機上限制高度，允許捲動，避免內容過長 */
+                max-height: 400px; 
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
         }
         
         @media (max-width: 900px) {
-            .section-title { padding: 12px 15px; font-size: 18px; }
-            .panel-content { padding: 12px 15px; }
+            .section-title { padding: 15px 20px; font-size: 20px; }
+            .panel-content { padding: 15px 20px; }
+            h1 { font-size: 24px; padding: 10px 20px; } /* RWD: 標題縮小 */
         }
     </style>
 </head>
 <body>
 
-<h1>台灣天氣與旅遊地圖</h1>
+<div class="header-row">
+    <h1>
+        🎉 歡迎來到台灣島！
+    </h1>
+    <img src="image_0.png" alt="說明圖：點選地圖城市，發現驚喜！" class="intro-inline" onclick="openModal('image_0.png')" role="button" aria-label="放大說明圖">
+</div>
 
 <div class="container">
     
     <div id="weatherPanel">
-        <h2 id="cityTitle" class="section-title">天氣資訊</h2>
+        <h2 id="cityTitle" class="section-title">☁️ 天氣資訊</h2>
         <div class="panel-content">
             <div id="weatherResult">請點選地圖上的縣市</div>
         </div>
@@ -239,11 +363,15 @@
     </div>
 
     <div id="tourismPanel">
-        <h3 class="section-title">觀光景點</h3>
+        <h3 class="section-title">🗺️ 觀光景點</h3>
         <div class="panel-content">
             <div id="touristSpotsList"></div>
         </div>
     </div>
+</div>
+
+<div id="surpriseBubble" onclick="hideSurpriseBubble()">
+    <p></p>
 </div>
 
 <div id="imageModal" onclick="closeModal()">
@@ -251,63 +379,43 @@
     <img id="modalContent" onclick="event.stopPropagation()">
 </div>
 <script>
-// ⭐ 定義顏色常量 (保持不變)
+// ⭐ 定義顏色常量
 const UNSELECTED_COLOR = '#CCCCCC';
-const SELECTED_COLOR = '#e83e8c';
-const LOADING_COLOR = '#ffc107';
+const SELECTED_COLOR = '#ff80a0'; 
+const LOADING_COLOR = '#f3cf00'; 
 
-// ⭐ 全域快取變數：只儲存一次所有城市的天氣資料
 let weatherCache = null; 
 const WEATHER_API_URL = "https://jringyoutask2.zeabur.app/api/weather/getAllCityWeather";
-
-// ⭐ 新增：觀光景點 CSV 檔案 URL
 const TOURISM_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVFoVhXMpRlpAlYahbf4tT5dsXZd3_Mb4mERIjjphpl3NYhpg_NfzIQfs7JVyczTizIKXhaiTm1L2Y/pub?gid=0&single=true&output=csv";
 
-
 /* ================================================= */
-/* --- 圖片放大/縮小函數 (重新加入) --- */
+/* --- 圖片放大/縮小函數 --- */
 /* ================================================= */
 const modal = document.getElementById("imageModal");
 const modalImg = document.getElementById("modalContent");
 
-/**
- * 顯示圖片放大視窗
- * @param {string} imgSrc - 圖片的 URL
- */
 function openModal(imgSrc) {
     modal.style.display = "flex"; 
     modalImg.src = imgSrc; 
 }
 
-/**
- * 隱藏圖片放大視窗
- */
 function closeModal() {
     modal.style.display = "none";
 }
 
-// 確保只有 modal 元素存在時才嘗試添加點擊事件
 if (document.querySelector(".close-btn")) {
     document.querySelector(".close-btn").onclick = closeModal;
 }
 
-/**
- * 處理並渲染觀光景點資料
- * @param {Array} data - 景點資料陣列
- * @param {string} city - 城市名稱
- * @param {HTMLElement} spotsList - 渲染目標 DOM 元素
- */
+/* ================================================= */
+/* --- 觀光景點處理 (保持不變) --- */
+/* ================================================= */
 function processTourismData(data, city, spotsList) {
     spotsList.innerHTML = '';
-    
-    // Normalize city names for filtering (e.g., 臺北市 -> 台北市)
     const normalizedCity = city.replace('臺', '台').trim();
-
-    // Filter by city name (case-insensitive and includes check for flexibility)
-    // 假設 data 中的 City 欄位包含完整或部分縣市名稱
     const scenicSpots = data.filter(spot => 
         spot.City && spot.City.replace('臺', '台').includes(normalizedCity)
-    ).slice(0, 5); // 篩選出前 5 個景點
+    ).slice(0, 5); 
 
     if (scenicSpots && scenicSpots.length > 0) {
         scenicSpots.forEach(spot => {
@@ -321,11 +429,10 @@ function processTourismData(data, city, spotsList) {
             const imageUrl = spot.PictureUrl || '';
 
             card.innerHTML = `
-                <h4>📍${city}</h4>
-                <p>${story}</p>
-                <p>🏙️ ${area}</p>             
+                <h4>📍${city} - ${area}</h4>
+                <p>📜 ${story || '沒有特別的故事紀錄...'} </p>             
                 ${imageUrl ? `<img src="${imageUrl}" alt="${city}" style="width:100%; height:auto; border-radius:4px; margin-bottom:8px;">` : ''}
-                <p>🍴${food}</p>
+                <p>🍴美食：${food || '沒有特別的美食紀錄...'}</p>
             `;
             spotsList.appendChild(card);
         });
@@ -335,21 +442,15 @@ function processTourismData(data, city, spotsList) {
 }
 
 
-/**
- * 載入觀光景點資料並顯示 (使用新的 CSV URL)
- * @param {string} city - 城市名稱
- */
 function loadTouristSpots(city) {
     const spotsList = document.getElementById("touristSpotsList");
     spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">景點資料載入中...</p>';
 
-    // 全域快取：如果已下載過 CSV，則直接使用快取資料
     if (window.tourismDataCache) {
         processTourismData(window.tourismDataCache, city, spotsList);
         return;
     }
 
-    // 從 Google Sheet CSV URL 取得資料
     fetch(TOURISM_CSV_URL)
         .then(response => {
             if (!response.ok) {
@@ -358,17 +459,14 @@ function loadTouristSpots(city) {
             return response.text();
         })
         .then(csvText => {
-            // ⭐ 簡單 CSV 解析實作 (處理逗號分隔和引號)
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
             if (lines.length < 2) {
                 spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">CSV 資料無內容或格式錯誤。</p>';
                 return;
             }
 
-            // 取得標題列並嘗試找出需要的欄位索引
             const headers = lines[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
             
-            // 假設欄位名稱包含以下關鍵字
             const spotIndex = headers.findIndex(h => h.includes('spot') || h.includes('景點'));
             const cityIndex = headers.findIndex(h => h.includes('city') || h.includes('縣市'));
             const foodIndex = headers.findIndex(h => h.includes('food') || h.includes('美食'));
@@ -376,24 +474,22 @@ function loadTouristSpots(city) {
             const imageUrlIndex = headers.findIndex(h => h.includes('imgurl')  || h.includes('圖片'));
 
             if (spotIndex === -1 || cityIndex === -1) {
-                 spotsList.innerHTML = '<p style="color:red; text-align:center; padding: 10px 0;">CSV 格式錯誤: 找不到景點名稱或縣市欄位。</p>';
-                 return;
+                   spotsList.innerHTML = '<p style="color:red; text-align:center; padding: 10px 0;">CSV 格式錯誤: 找不到景點名稱或縣市欄位。</p>';
+                   return;
             }
             
-            // 解析資料列
             const rawData = lines.slice(1).map(line => {
-                 // 使用更彈性的 regex 分割，並移除首尾引號
-                 const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
-                 return {
-                     Spot: values[spotIndex] || '未命名景點',
-                     City: values[cityIndex] || '',
-                     Story: values[storyIndex] ,
-                     Food: values[foodIndex] ,
-                     PictureUrl: values[imageUrlIndex] || ''
-                 };
+                   const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
+                   return {
+                       Spot: values[spotIndex] || '未命名景點',
+                       City: values[cityIndex] || '',
+                       Story: values[storyIndex] || '',
+                       Food: values[foodIndex] || '',
+                       PictureUrl: values[imageUrlIndex] || ''
+                   };
             });
             
-            window.tourismDataCache = rawData; // 快取解析後的資料
+            window.tourismDataCache = rawData; 
             processTourismData(rawData, city, spotsList);
         })
         .catch(error => {
@@ -403,9 +499,9 @@ function loadTouristSpots(city) {
 }
 
 
-/**
- * 根據溫度、降雨率和舒適度描述提供穿衣建議 (保持不變)
- */
+/* ================================================= */
+/* --- 天氣與穿搭處理 --- */
+/* ================================================= */
 function getClothingAdvice(minTemp, maxTemp, rain, comfort) {
     const avgTemp = (minTemp + maxTemp) / 2;
     let advice = "";
@@ -422,14 +518,12 @@ function getClothingAdvice(minTemp, maxTemp, rain, comfort) {
         advice = "寒冷！請務必穿著厚外套、羽絨服、發熱衣和圍巾，加強保暖。";
     }
 
-    // 根據降雨調整建議
     if (rain >= 50) {
         advice += " ⚠️今日降雨機率高，務必攜帶雨具並考慮穿著防水外套。";
     } else if (rain >= 30) {
         advice += " ☔️有局部降雨機會，建議攜帶雨具備用。";
     }
 
-    // 根據體感描述微調
     if (comfort.includes('潮濕') || comfort.includes('悶熱')) {
         advice += " 💧體感偏潮濕悶熱，建議選擇透氣吸汗材質的衣物。";
     } else if (comfort.includes('涼爽') || comfort.includes('舒適')) {
@@ -439,34 +533,16 @@ function getClothingAdvice(minTemp, maxTemp, rain, comfort) {
     return advice;
 }
 
-/**
- * 根據平均溫度選擇對應的穿搭圖示 URL (返回根目錄路徑)
- * @param {number} avgTemp - 平均溫度 (C)
- * @returns {string} 穿搭圖示的相對 URL
- */
 function getClothingIcon(avgTemp) {
-    // ⭐ 根據您的要求，這裡返回的是相對根目錄的路徑
-    if (avgTemp >= 28) {
-        return 'Clother_01.png'; 
-    } else if (avgTemp >= 23) {
-        return 'Clother_02.png'; 
-    } else if (avgTemp >= 18) {
-        return 'Clother_03.png'; 
-    } else if (avgTemp >= 13) {
-        return 'Clother_04.png'; 
-    } else { 
-        return 'Clother_05.png'; 
-    }
+    if (avgTemp >= 28) { return 'Clother_01.png'; } 
+    else if (avgTemp >= 23) { return 'Clother_02.png'; } 
+    else if (avgTemp >= 18) { return 'Clother_03.png'; } 
+    else if (avgTemp >= 13) { return 'Clother_04.png'; } 
+    else { return 'Clother_05.png'; } 
 }
 
-/**
- * ⭐ 根據 avgTemp 取得並生成 HTML 圖像標籤 (包含點擊放大功能)
- * @param {number} avgTemp - 平均溫度 (C)
- * @returns {string} 包含 30x30 圖片和點擊事件的 HTML 字符串
- */
 function getClothingImg(avgTemp) {
-    const iconUrl = getClothingIcon(avgTemp); // 呼叫 getClothingIcon 取得相對路徑
-    // 將可點擊的 div 僅包裹圖片，並綁定 openModal
+    const iconUrl = getClothingIcon(avgTemp);
     return `
         <div class="icon-wrapper" onclick="openModal('${iconUrl}')">
             <img src="${iconUrl}" class="clothing-icon" alt="穿搭圖示">
@@ -474,9 +550,8 @@ function getClothingImg(avgTemp) {
     `;
 }
 
-
 /**
- * ⭐ 載入天氣資料 (使用 getClothingImg 函數) ⭐
+ * ⭐ 載入天氣資料 (僅顯示第一個預報時段) ⭐
  * @param {string} city - 城市名稱
  * @param {SVGElement} svgElement - 被點擊的 SVG 元素
  */
@@ -485,88 +560,76 @@ function loadWeather(city, svgElement) {
     const spotsList = document.getElementById("touristSpotsList");
     const cityTitle = document.getElementById("cityTitle");
     
-    cityTitle.innerText = `【${city}】讀取中...`;
+    cityTitle.innerHTML = `【${city}】讀取中... <img src="ac_loading.gif" alt="載入中" style="height:20px; vertical-align:middle;">`; 
     resultContainer.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">天氣資料載入中...</p>';
     spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">景點資料載入中...</p>';
     
-    if (svgElement) {
-        svgElement.setAttribute('fill', LOADING_COLOR);
-    }
+    if (svgElement) { svgElement.setAttribute('fill', LOADING_COLOR); }
 
     const dataPromise = weatherCache 
         ? Promise.resolve({ data: weatherCache }) 
         : fetch(WEATHER_API_URL).then(response => { 
-            if (!response.ok) {
-                throw new Error(`HTTP 錯誤: ${response.status}`);
-            }
+            if (!response.ok) { throw new Error(`HTTP 錯誤: ${response.status}`); }
             return response.json();
         });
 
-
     dataPromise
         .then(responseData => {
-            if (!weatherCache) {
-                weatherCache = responseData.data; 
-            }
+            if (!weatherCache) { weatherCache = responseData.data; }
             const allCityData = weatherCache; 
 
-            if (svgElement) {
-                svgElement.setAttribute('fill', SELECTED_COLOR);
-            }
+            if (svgElement) { svgElement.setAttribute('fill', SELECTED_COLOR); }
 
             const found = allCityData.find(item => item.city && item.city.includes(city));
 
-            if (found) {
-                cityTitle.innerText = `${found.city}：未來預報`; 
+            if (found && found.forecasts && found.forecasts.length > 0) {
+                
+                // ⭐ 只取第一個預報時段 (精簡版)
+                const el = found.forecasts[0]; 
+                
+                cityTitle.innerText = `☀️ ${found.city}：目前與近期預報`; 
                 resultContainer.innerHTML = ''; 
 
-                found.forecasts.forEach(el => {
-                    const card = document.createElement('div');
-                    card.classList.add('forecast-card');
-                    
-                    const startTimeText = el.startTime.substring(5, 16).replace('-', '/');
-                    const endTimeText = el.endTime.substring(11, 16);
-                    
-                    const minTemp = parseFloat(el.minTemp);
-                    const maxTemp = parseFloat(el.maxTemp);
-                    const rain = parseFloat(el.rain);
-                    
-                    const avgTemp = (minTemp + maxTemp) / 2; // 計算平均溫度
-                    
-                    const clothingAdvice = getClothingAdvice(minTemp, maxTemp, rain, el.comfort);
-                    
-                    // ⭐ 使用 getClothingImg 函數生成帶有可點擊圖示的 HTML
-                    const clothingImgHtml = getClothingImg(avgTemp);
-                    
-                    card.innerHTML = `
-                        <h4>📅 ${startTimeText} ~ ${endTimeText}</h4>
-                        <p>☁️ 天氣：${el.weather}</p>
-                        <p class="temp-range">
-                            🌡 溫度：${el.minTemp} ~ ${el.maxTemp}
-                        </p>
-                        <p>👤 體感：${el.comfort}</p>
-                        <p>💧 降雨率：${el.rain}</p>
-                        <div class="clothing-advice">
-                            ${clothingImgHtml}
-                            <span>🧥 建議穿搭：${clothingAdvice}</span>
-                        </div>
-                    `;
-                    resultContainer.appendChild(card);
-                });
+                const card = document.createElement('div');
+                card.classList.add('forecast-card');
                 
-                // ⭐ 呼叫修改後的 loadTouristSpots
+                const startTimeText = el.startTime.substring(5, 16).replace('-', '/');
+                const endTimeText = el.endTime.substring(11, 16);
+                
+                const minTemp = parseFloat(el.minTemp);
+                const maxTemp = parseFloat(el.maxTemp);
+                const rain = parseFloat(el.rain);
+                
+                const avgTemp = (minTemp + maxTemp) / 2; 
+                const clothingAdvice = getClothingAdvice(minTemp, maxTemp, rain, el.comfort);
+                const clothingImgHtml = getClothingImg(avgTemp);
+                
+                card.innerHTML = `
+                    <h4>📅 ${startTimeText} ~ ${endTimeText}</h4>
+                    <p>☁️ 天氣：${el.weather}</p>
+                    <p class="temp-range">
+                        🌡 溫度：${el.minTemp}°C ~ ${el.maxTemp}°C
+                    </p>
+                    <p>👤 體感：${el.comfort}</p>
+                    <p>💧 降雨率：${el.rain}%</p>
+                    <div class="clothing-advice">
+                        ${clothingImgHtml}
+                        <span>🧥 建議穿搭：${clothingAdvice}</span>
+                    </div>
+                `;
+                resultContainer.appendChild(card);
+                
+                // 呼叫觀光景點
                 loadTouristSpots(found.city);
 
             } else {
-                cityTitle.innerText = "天氣資訊";
+                cityTitle.innerText = "天氣資訊 (查無資料)";
                 resultContainer.innerHTML = `<p style="color:red; text-align:center; padding: 10px 0;">查無 ${city} 的天氣資料。</p>`;
                 spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">請點選地圖上的縣市</p>';
             }
         })
         .catch(error => {
-            if (svgElement) {
-                svgElement.setAttribute('fill', SELECTED_COLOR);
-            }
+            if (svgElement) { svgElement.setAttribute('fill', SELECTED_COLOR); }
             cityTitle.innerText = "天氣資訊 (載入失敗)";
             resultContainer.innerHTML = `<p style="color:red; text-align:center; padding: 10px 0;">天氣資料載入失敗！ (${error.message})</p>`;
             spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">景點載入失敗</p>';
@@ -574,8 +637,55 @@ function loadWeather(city, svgElement) {
         });
 }
 
+/* ================================================= */
+/* --- 驚喜氣泡 (Surprise Logic) --- */
+/* ================================================= */
+const surpriseBubble = document.getElementById("surpriseBubble");
+const surpriseMessages = [
+    "嗶！找到一顆鈴錢！💰",
+    "發現稀有昆蟲！🐞",
+    "今天是動森居民的生日喔！🎂",
+    "嘿！你挖到化石了！🦴",
+    "狸克正在偷看你喔！🤫",
+    "咦？有漂流瓶！🌊",
+    "你剛嚇跑了一隻魚！🐟",
+    "你的手機收到一封信！💌",
+    "哇！發現竹筍了！🎍",
+    "準備好你的捕蟲網了嗎？",
+    "一起去釣魚吧！🎣"
+];
+
+function hideSurpriseBubble() {
+    surpriseBubble.style.display = 'none';
+}
+
+function showSurpriseBubble(event) {
+    const randomIndex = Math.floor(Math.random() * surpriseMessages.length);
+    const message = surpriseMessages[randomIndex];
+    
+    surpriseBubble.querySelector('p').innerText = message;
+    
+    let x = event.clientX;
+    let y = event.clientY;
+
+    // 使用 transform 確保在點擊位置上方置中
+    surpriseBubble.style.left = `${x}px`;
+    surpriseBubble.style.top = `${y - 30}px`; 
+    surpriseBubble.style.transform = 'translate(-50%, -100%)'; 
+
+    surpriseBubble.style.display = 'block';
+
+    setTimeout(hideSurpriseBubble, 2500);
+}
+
+// 監聽 mapBox 區域的點擊事件 (包含 SVG 和其周圍)，用於觸發驚喜
+document.getElementById("mapBox").addEventListener("click", (event) => {
+    showSurpriseBubble(event);
+});
+
+
 /* ===========================
-    啟動 SVG 點擊事件 (保持不變)
+    啟動 SVG 點擊事件 (城市選擇)
 ============================= */
 document.getElementById("taiwanMap").addEventListener("load", () => {
     const svgObject = document.getElementById("taiwanMap");
@@ -591,7 +701,7 @@ document.getElementById("taiwanMap").addEventListener("load", () => {
         area.setAttribute('fill', UNSELECTED_COLOR);
         area.style.transition = 'fill 0.3s ease'; 
         
-        area.addEventListener("click", () => {
+        area.addEventListener("click", (event) => {
             
             if (selectedArea && selectedArea !== area) {
                 selectedArea.setAttribute('fill', UNSELECTED_COLOR);
