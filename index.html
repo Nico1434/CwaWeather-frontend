@@ -256,8 +256,13 @@ const UNSELECTED_COLOR = '#CCCCCC';
 const SELECTED_COLOR = '#e83e8c';
 const LOADING_COLOR = '#ffc107';
 
-// ⭐ 請將此處替換為您自己的交通部觀光署 API Key！
-const TOURISM_API_KEY = "YOUR_TOURISM_API_KEY_HERE"; 
+// ⭐ 全域快取變數：只儲存一次所有城市的天氣資料
+let weatherCache = null; 
+const WEATHER_API_URL = "https://jringyoutask2.zeabur.app/api/weather/getAllCityWeather";
+
+// ⭐ 新增：觀光景點 CSV 檔案 URL
+const TOURISM_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVFoVhXMpRlpAlYahbf4tT5dsXZd3_Mb4mERIjjphpl3NYhpg_NfzIQfs7JVyczTizIKXhaiTm1L2Y/pub?gid=0&single=true&output=csv";
+
 
 /* ================================================= */
 /* --- 圖片放大/縮小函數 (重新加入) --- */
@@ -286,63 +291,115 @@ if (document.querySelector(".close-btn")) {
     document.querySelector(".close-btn").onclick = closeModal;
 }
 
+/**
+ * 處理並渲染觀光景點資料
+ * @param {Array} data - 景點資料陣列
+ * @param {string} city - 城市名稱
+ * @param {HTMLElement} spotsList - 渲染目標 DOM 元素
+ */
+function processTourismData(data, city, spotsList) {
+    spotsList.innerHTML = '';
+    
+    // Normalize city names for filtering (e.g., 臺北市 -> 台北市)
+    const normalizedCity = city.replace('臺', '台').trim();
+
+    // Filter by city name (case-insensitive and includes check for flexibility)
+    // 假設 data 中的 City 欄位包含完整或部分縣市名稱
+    const scenicSpots = data.filter(spot => 
+        spot.City && spot.City.replace('臺', '台').includes(normalizedCity)
+    ).slice(0, 5); // 篩選出前 5 個景點
+
+    if (scenicSpots && scenicSpots.length > 0) {
+        scenicSpots.forEach(spot => {
+            const card = document.createElement('div');
+            card.classList.add('spot-card');
+            
+            const city = spot.City;
+            const area = spot.Spot;
+            const story = spot.Story ;
+            const food = spot.Food ;
+            const imageUrl = spot.PictureUrl || '';
+
+            card.innerHTML = `
+                <h4>📍${city}</h4>
+                <p>${story}</p>
+                <p>🏙️ ${area}</p>             
+                ${imageUrl ? `<img src="${imageUrl}" alt="${city}" style="width:100%; height:auto; border-radius:4px; margin-bottom:8px;">` : ''}
+                <p>🍴${food}</p>
+            `;
+            spotsList.appendChild(card);
+        });
+    } else {
+        spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">查無相關觀光景點資料。</p>';
+    }
+}
+
 
 /**
- * 載入觀光景點資料並顯示 (簡化景點圖片處理)
+ * 載入觀光景點資料並顯示 (使用新的 CSV URL)
  * @param {string} city - 城市名稱
  */
 function loadTouristSpots(city) {
     const spotsList = document.getElementById("touristSpotsList");
     spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">景點資料載入中...</p>';
 
-    if (!TOURISM_API_KEY || TOURISM_API_KEY === "YOUR_TOURISM_API_KEY_HERE") {
-        spotsList.innerHTML = '<p style="color:red; text-align:center; padding: 10px 0;">請設定觀光 API Key。</p>';
-        console.warn("觀光 API Key 未設定。");
+    // 全域快取：如果已下載過 CSV，則直接使用快取資料
+    if (window.tourismDataCache) {
+        processTourismData(window.tourismDataCache, city, spotsList);
         return;
     }
 
-    const encodedCity = encodeURIComponent(city.replace('臺', '台')); 
-    const url = `https://tdx.transportdata.tw/api/basic/v2/Tourism/ScenicSpot?$filter=City%20eq%20'${encodedCity}'&$top=5&$format=JSON`;
-    
-    fetch(url, {
-        headers: {
-            'Authorization': `Bearer ${TOURISM_API_KEY}`
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(`TDX API 錯誤: ${response.status} - ${err.message || response.statusText}`); });
-        }
-        return response.json();
-    })
-    .then(data => {
-        spotsList.innerHTML = '';
-        const scenicSpots = data.ScenicSpots;
+    // 從 Google Sheet CSV URL 取得資料
+    fetch(TOURISM_CSV_URL)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`CSV 載入錯誤: ${response.status} ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            // ⭐ 簡單 CSV 解析實作 (處理逗號分隔和引號)
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 2) {
+                spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">CSV 資料無內容或格式錯誤。</p>';
+                return;
+            }
 
-        if (scenicSpots && scenicSpots.length > 0) {
-            scenicSpots.forEach(spot => {
-                const card = document.createElement('div');
-                card.classList.add('spot-card');
-                
-                const name = spot.ScenicSpotName || '未命名景點';
-                const address = spot.Address || '無地址資訊';
-                const imageUrl = spot.Picture && spot.Picture.PictureUrl1 ? spot.Picture.PictureUrl1 : '';
+            // 取得標題列並嘗試找出需要的欄位索引
+            const headers = lines[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+            
+            // 假設欄位名稱包含以下關鍵字
+            const spotIndex = headers.findIndex(h => h.includes('spot') || h.includes('景點'));
+            const cityIndex = headers.findIndex(h => h.includes('city') || h.includes('縣市'));
+            const foodIndex = headers.findIndex(h => h.includes('food') || h.includes('美食'));
+            const storyIndex = headers.findIndex(h => h.includes('story')  || h.includes('故事'));
+            const imageUrlIndex = headers.findIndex(h => h.includes('imgurl')  || h.includes('圖片'));
 
-                card.innerHTML = `
-                    <h4>📍 ${name}</h4>
-                    ${imageUrl ? `<img src="${imageUrl}" alt="${name}" style="width:100%; height:auto; border-radius:4px; margin-bottom:8px;">` : ''}
-                    <p>${address}</p>
-                `;
-                spotsList.appendChild(card);
+            if (spotIndex === -1 || cityIndex === -1) {
+                 spotsList.innerHTML = '<p style="color:red; text-align:center; padding: 10px 0;">CSV 格式錯誤: 找不到景點名稱或縣市欄位。</p>';
+                 return;
+            }
+            
+            // 解析資料列
+            const rawData = lines.slice(1).map(line => {
+                 // 使用更彈性的 regex 分割，並移除首尾引號
+                 const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
+                 return {
+                     Spot: values[spotIndex] || '未命名景點',
+                     City: values[cityIndex] || '',
+                     Story: values[storyIndex] ,
+                     Food: values[foodIndex] ,
+                     PictureUrl: values[imageUrlIndex] || ''
+                 };
             });
-        } else {
-            spotsList.innerHTML = '<p style="text-align:center; color:#888; padding: 10px 0;">查無相關觀光景點資料。</p>';
-        }
-    })
-    .catch(error => {
-        console.error('載入觀光景點發生錯誤:', error);
-        spotsList.innerHTML = `<p style="color:red; text-align:center; padding: 10px 0;">景點載入失敗: ${error.message}</p>`;
-    });
+            
+            window.tourismDataCache = rawData; // 快取解析後的資料
+            processTourismData(rawData, city, spotsList);
+        })
+        .catch(error => {
+            console.error('載入觀光景點發生錯誤:', error);
+            spotsList.innerHTML = `<p style="color:red; text-align:center; padding: 10px 0;">景點載入失敗: ${error.message}</p>`;
+        });
 }
 
 
@@ -381,11 +438,6 @@ function getClothingAdvice(minTemp, maxTemp, rain, comfort) {
 
     return advice;
 }
-
- // ⭐ 全域快取變數：只儲存一次所有城市的天氣資料
-let weatherCache = null; 
-const WEATHER_API_URL = "https://jringyoutask2.zeabur.app/api/weather/getAllCityWeather";
-
 
 /**
  * 根據平均溫度選擇對應的穿搭圖示 URL (返回根目錄路徑)
@@ -502,6 +554,7 @@ function loadWeather(city, svgElement) {
                     resultContainer.appendChild(card);
                 });
                 
+                // ⭐ 呼叫修改後的 loadTouristSpots
                 loadTouristSpots(found.city);
 
             } else {
