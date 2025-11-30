@@ -2,8 +2,8 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🏡 動物森友會風格的台灣天氣與旅遊地圖 (精簡天氣版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=0.75, maximum-scale=0.75, minimum-scale=0.75, user-scalable=no" />
+    <title>🏡 台灣天氣與旅遊地圖 (精簡天氣版)</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,6 +37,11 @@
             align-items: center;
             color: var(--ac-text);
             padding-bottom: 50px; 
+        }
+
+        /* 設定整個頁面預設縮放為 75%（兼容大多數 Chromium 瀏覽器） */
+        html {
+            zoom: 75%;
         }
 
         h1 {
@@ -115,7 +120,7 @@
             /* AC 風格邊框 */
             border: 5px solid var(--ac-border-color);
             border-radius: 15px;
-            background-color: var(--ac-green);
+            background-color: var(--ac-blue);
             box-shadow: 5px 5px 0 0 var(--ac-shadow);
             padding: 10px;
         }
@@ -302,6 +307,56 @@
             font-size: 16px;
         }
 
+        /* --- 地圖旗標樣式 --- */
+        .map-marker {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1500;
+            display: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.98);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.12);
+            transition: left 0.32s cubic-bezier(.2,.9,.2,1), top 0.32s cubic-bezier(.2,.9,.2,1),
+                        opacity 0.28s ease, transform 0.28s ease;
+            will-change: left, top, opacity, transform;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        .map-marker .marker-label {
+            display: inline-block;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid var(--ac-border-color);
+            color: var(--ac-text);
+            padding: 6px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+            white-space: nowrap;
+        }
+
+        .map-marker::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: calc(100% - 6px);
+            transform: translateX(-50%) rotate(45deg);
+            width: 12px;
+            height: 12px;
+            background: rgba(255,255,255,0.95);
+            border-left: 2px solid var(--ac-border-color);
+            border-top: 2px solid var(--ac-border-color);
+            border-bottom: none;
+            border-right: none;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+        }
+
+        .map-marker.visible {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
         @keyframes bounceIn {
             0% { transform: scale(0.5); opacity: 0; }
             70% { transform: scale(1.1); opacity: 1; }
@@ -374,6 +429,11 @@
     <p></p>
 </div>
 
+<!-- 地圖旗標（點選時顯示） -->
+<div id="mapMarker" class="map-marker" aria-hidden="true">
+    <span class="marker-label"></span>
+</div>
+
 <div id="imageModal" onclick="closeModal()">
     <span class="close-btn">&times;</span> 
     <img id="modalContent" onclick="event.stopPropagation()">
@@ -393,6 +453,57 @@ const TOURISM_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVFoVh
 /* ================================================= */
 const modal = document.getElementById("imageModal");
 const modalImg = document.getElementById("modalContent");
+
+// 地圖旗標元素 & 動畫控制
+const mapMarker = document.getElementById('mapMarker');
+let markerHideTimeout = null;
+
+function placeMapMarker(clientX, clientY, label) {
+    const mapBox = document.getElementById('mapBox');
+    const rect = mapBox.getBoundingClientRect();
+
+    // 確保旗標是 mapBox 的子元素，這樣 left/top 可相對於 mapBox 設定
+    if (mapMarker.parentElement !== mapBox) {
+        mapBox.appendChild(mapMarker);
+    }
+
+    // clientX/Y 為 viewport 座標，轉為相對於 mapBox 的座標
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    // 取消任何預設的隱藏計時器，準備顯示/移動旗標
+    if (markerHideTimeout) { clearTimeout(markerHideTimeout); markerHideTimeout = null; }
+
+    // 設定座標 — left/top 使用像素會觸發平滑過渡
+    mapMarker.style.left = `${x}px`;
+    mapMarker.style.top = `${y}px`;
+
+    // 若有 label，設定文字（預設空字串）
+    const lbl = mapMarker.querySelector('.marker-label');
+    if (lbl) { lbl.textContent = label || ''; }
+
+    // 確保顯示（清除先前 inline display:none），觸發重排後加入 visible 以啟動 transition
+    mapMarker.style.display = 'block';
+    // force reflow
+    void mapMarker.offsetWidth;
+    mapMarker.classList.add('visible');
+
+    // 預設 5 秒後自動淡出（可改）
+    markerHideTimeout = setTimeout(() => hideMapMarker(), 5000);
+}
+
+function hideMapMarker() {
+    // 先移除 visible，CSS transition 會處理淡出
+    mapMarker.classList.remove('visible');
+
+    // 在 transition 完成後把 display 設回 none（以避免阻礙互動），延遲略大於 CSS transition
+    setTimeout(() => {
+        if (!mapMarker.classList.contains('visible')) {
+            mapMarker.style.display = 'none';
+        }
+    }, 360);
+    if (markerHideTimeout) { clearTimeout(markerHideTimeout); markerHideTimeout = null; }
+}
 
 function openModal(imgSrc) {
     modal.style.display = "flex"; 
@@ -587,7 +698,7 @@ function loadWeather(city, svgElement) {
                 // ⭐ 只取第一個預報時段 (精簡版)
                 const el = found.forecasts[0]; 
                 
-                cityTitle.innerText = `☀️ ${found.city}：目前與近期預報`; 
+                cityTitle.innerText = `☀️ ${found.city}：最新天氣預報`; 
                 resultContainer.innerHTML = ''; 
 
                 const card = document.createElement('div');
@@ -608,10 +719,10 @@ function loadWeather(city, svgElement) {
                     <h4>📅 ${startTimeText} ~ ${endTimeText}</h4>
                     <p>☁️ 天氣：${el.weather}</p>
                     <p class="temp-range">
-                        🌡 溫度：${el.minTemp}°C ~ ${el.maxTemp}°C
+                        🌡 溫度：${el.minTemp} ~ ${el.maxTemp}
                     </p>
                     <p>👤 體感：${el.comfort}</p>
-                    <p>💧 降雨率：${el.rain}%</p>
+                    <p>💧 降雨率：${el.rain}</p>
                     <div class="clothing-advice">
                         ${clothingImgHtml}
                         <span>🧥 建議穿搭：${clothingAdvice}</span>
@@ -711,7 +822,32 @@ document.getElementById("taiwanMap").addEventListener("load", () => {
             selectedArea = area;
             
             const cityName = area.getAttribute("data-city");
-            loadWeather(cityName, area); 
+            loadWeather(cityName, area);
+            // 使用元素的 bounding rect 計算中心點，將旗標精準放在地區中心
+                    try {
+                        // 優先使用 SVG 元素的幾何中心 (getBBox) 並透過 getScreenCTM() 轉換為螢幕座標，
+                        // 這比 boundingClientRect 在使用 zoom/transform 時更精準。
+                        const svgRoot = svg.documentElement || svg.getElementsByTagName('svg')[0];
+                        if (svgRoot && typeof area.getBBox === 'function' && typeof area.getScreenCTM === 'function') {
+                            const bbox = area.getBBox();
+                            const pt = svgRoot.createSVGPoint();
+                            pt.x = bbox.x + bbox.width / 2;
+                            pt.y = bbox.y + bbox.height / 2;
+                            const screenPt = pt.matrixTransform(area.getScreenCTM());
+                            //placeMapMarker(screenPt.x, screenPt.y, cityName);
+                        } else {
+                            // 若 SVG API 不可用，退回使用 boundingClientRect
+                            const elRect = area.getBoundingClientRect();
+                            const centerX = elRect.left + elRect.width / 2;
+                            const centerY = elRect.top + elRect.height / 2;
+                            //placeMapMarker(centerX, centerY, cityName);
+                        }
+                    } catch (e) {
+                        // 若一切方法失敗，回退為使用點擊座標
+                        if (event && event.clientX !== undefined) {
+                            //placeMapMarker(event.clientX, event.clientY, cityName);
+                        }
+                    }
         });
     });
 });
